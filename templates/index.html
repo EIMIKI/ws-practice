@@ -1,0 +1,23 @@
+<html>
+
+<head>
+    <title>wsTest</title>
+</head>
+
+<style>
+    a {
+        display: block;
+    }
+</style>
+
+<body>
+    <form action="/create" method="post">
+        <input type="text" name="id">
+        <button type="submit">Create Room</button>
+    </form>
+    {{range .rooms}}
+    <a href="/{{.}}">{{.}}</a>
+    {{end}}
+</body>
+
+</html>
