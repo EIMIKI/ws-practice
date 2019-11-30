@@ -13,9 +13,6 @@ type Controller struct {
 type Room struct {
 	m *melody.Melody
 }
-type MelodyController struct {
-	m *melody.Melody
-}
 
 func main() {
 	r := gin.Default()
@@ -33,10 +30,6 @@ func getController() *Controller {
 	return &Controller{Rooms: map[string]*Room{}}
 }
 
-func getMelodyController(m *melody.Melody) *MelodyController {
-	return &MelodyController{m: m}
-}
-
 func (controller *Controller) getRoot(c *gin.Context) {
 	roomID := c.Param("room")
 	room, ok := controller.Rooms[roomID]
@@ -45,9 +38,8 @@ func (controller *Controller) getRoot(c *gin.Context) {
 		controller.Rooms[roomID] = &Room{m: m}
 		room = controller.Rooms[roomID]
 	}
-	mController := getMelodyController(room.m)
 
-	room.m.HandleMessage(mController.handleMessage)
+	room.m.HandleMessage(room.handleMessage)
 	c.HTML(http.StatusOK, "index.html", nil)
 }
 
@@ -57,6 +49,6 @@ func (controller *Controller) getWebSocket(c *gin.Context) {
 	room.m.HandleRequest(c.Writer, c.Request)
 }
 
-func (mController *MelodyController) handleMessage(s *melody.Session, msg []byte) {
-	mController.m.Broadcast(msg)
+func (room *Room) handleMessage(s *melody.Session, msg []byte) {
+	room.m.Broadcast(msg)
 }
