@@ -22,7 +22,7 @@
     </center>
 
     <script>
-        const url = "ws://" + window.location.host + "/ws"
+        const url = "ws://" + window.location.host + location.pathname + "/ws"
         const ws = new WebSocket(url)
         const name = "Guest" + Math.floor(Math.random() * 1000)
 

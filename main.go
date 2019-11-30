@@ -1,41 +1,62 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"gopkg.in/olahol/melody.v1"
-	"net/http"
 )
 
 type Controller struct {
-	M *melody.Melody
+	Rooms map[string]*Room
+}
+type Room struct {
+	m *melody.Melody
+}
+type MelodyController struct {
+	m *melody.Melody
 }
 
 func main() {
 	r := gin.Default()
-	m := melody.New()
 
-	controller := getController(m)
+	controller := getController()
 
 	r.LoadHTMLGlob("./*.html")
 
-	r.GET("/", controller.getRoot)
-	r.GET("/ws", controller.getWebSocket)
-	m.HandleMessage(controller.HandleMessage)
+	r.GET("/:room", controller.getRoot)
+	r.GET("/:room/ws", controller.getWebSocket)
 	r.Run()
 }
 
-func getController(m *melody.Melody) *Controller {
-	return &Controller{M: m}
+func getController() *Controller {
+	return &Controller{Rooms: map[string]*Room{}}
+}
+
+func getMelodyController(m *melody.Melody) *MelodyController {
+	return &MelodyController{m: m}
 }
 
 func (controller *Controller) getRoot(c *gin.Context) {
+	roomID := c.Param("room")
+	room, ok := controller.Rooms[roomID]
+	if !ok {
+		m := melody.New()
+		controller.Rooms[roomID] = &Room{m: m}
+		room = controller.Rooms[roomID]
+	}
+	mController := getMelodyController(room.m)
+
+	room.m.HandleMessage(mController.handleMessage)
 	c.HTML(http.StatusOK, "index.html", nil)
 }
 
 func (controller *Controller) getWebSocket(c *gin.Context) {
-	controller.M.HandleRequest(c.Writer, c.Request)
+	roomID := c.Param("room")
+	room := controller.Rooms[roomID]
+	room.m.HandleRequest(c.Writer, c.Request)
 }
 
-func (controller *Controller) HandleMessage(s *melody.Session, msg []byte) {
-	controller.M.Broadcast(msg)
+func (mController *MelodyController) handleMessage(s *melody.Session, msg []byte) {
+	mController.m.Broadcast(msg)
 }
